@@ -37,18 +37,14 @@ TOP_P = 0.9
 # Chọn 0.3 vì: RAG cần factual, ít sáng tạo
 TEMPERATURE = 0.3
 
-# LLM model: dùng model ":free" trên OpenRouter để không tốn credit khi chạy lab
-LLM_MODEL = "inclusionai/ling-3.0-flash:free"
+# Gemini 3.5 Flash-Lite is the selected provider for the evaluation run.
+LLM_MODEL = "gemini-3.5-flash-lite"
 
-# Fallback chain khi provider chính bị lỗi (rate limit 429, thiếu key...):
-# OpenRouter (chính, free tier ~50 req/ngày) -> OpenAI -> Gemini (OpenAI-compatible endpoint)
+# Keep the evaluation deterministic: use the configured Gemini provider directly
+# instead of silently falling through to a different provider/model.
 LLM_PROVIDERS = [
-    {"name": "openrouter", "base_url": "https://openrouter.ai/api/v1",
-     "api_key_env": "OPENROUTER_API_KEY", "model": LLM_MODEL},
-    {"name": "openai", "base_url": None,
-     "api_key_env": "OPENAI_API_KEY", "model": "gpt-4o-mini"},
     {"name": "gemini", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
-     "api_key_env": "GEMINI_API_KEY", "model": "gemini-2.0-flash"},
+     "api_key_env": "RAG_GEMINI_API_KEY", "model": LLM_MODEL},
 ]
 
 
@@ -147,12 +143,12 @@ def _call_llm(messages: list[dict]) -> str:
 
         try:
             client = OpenAI(api_key=api_key, base_url=provider["base_url"])
-            response = client.chat.completions.create(
-                model=provider["model"],
-                messages=messages,
-                temperature=TEMPERATURE,
-                top_p=TOP_P,
-            )
+            request = {"model": provider["model"], "messages": messages}
+            # Gemini 3.5 Flash-Lite deprecates sampling parameters; omit them
+            # rather than relying on parameters that may become HTTP 400 errors.
+            if provider["name"] != "gemini":
+                request.update({"temperature": TEMPERATURE, "top_p": TOP_P})
+            response = client.chat.completions.create(**request)
             return response.choices[0].message.content
         except Exception as e:
             last_error = e
@@ -170,7 +166,11 @@ def _call_llm(messages: list[dict]) -> str:
 # GENERATION
 # =============================================================================
 
-def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
+def generate_with_citation(
+    query: str,
+    top_k: int = TOP_K,
+    use_reranking: bool = True,
+) -> dict:
     """
     End-to-end RAG generation có citation.
 
@@ -184,6 +184,8 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
 
     Args:
         query: Câu hỏi của user
+        top_k: Số chunks tối đa đưa vào generation.
+        use_reranking: Chuyển tiếp sang Task 9 để chạy evaluation A/B.
 
     Returns:
         {
@@ -193,7 +195,7 @@ def generate_with_citation(query: str, top_k: int = TOP_K) -> dict:
         }
     """
     # Step 1: Retrieve
-    chunks = retrieve(query, top_k=top_k)
+    chunks = retrieve(query, top_k=top_k, use_reranking=use_reranking)
 
     # Không có evidence -> không gọi LLM đoán, trả thẳng câu từ chối
     if not chunks:
