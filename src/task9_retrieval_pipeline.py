@@ -24,11 +24,39 @@ Logic:
     liên quan và vài câu chắc chắn lạc đề/rác qua semantic_search, xem khoảng cách
     điểm số giữa hai nhóm rồi chọn ngưỡng nằm giữa.
 """
-
 from .task5_semantic_search import semantic_search
 from .task6_lexical_search import lexical_search
 from .task7_reranking import rerank, rerank_rrf
 from .task8_pageindex_vectorless import pageindex_search
+
+def _semantic_search(query: str, top_k: int) -> list[dict]:
+    from .task5_semantic_search import semantic_search
+
+    return semantic_search(query, top_k=top_k)
+
+
+def _lexical_search(query: str, top_k: int) -> list[dict]:
+    from .task6_lexical_search import lexical_search
+
+    return lexical_search(query, top_k=top_k)
+
+
+def _rerank_rrf(ranked_lists: list[list[dict]], top_k: int) -> list[dict]:
+    from .task7_reranking import rerank_rrf
+
+    return rerank_rrf(ranked_lists, top_k=top_k)
+
+
+def _rerank(query: str, candidates: list[dict], top_k: int, method: str) -> list[dict]:
+    from .task7_reranking import rerank
+
+    return rerank(query, candidates, top_k=top_k, method=method)
+
+
+def _pageindex_search(query: str, top_k: int) -> list[dict]:
+    from .task8_pageindex_vectorless import pageindex_search
+
+    return pageindex_search(query, top_k=top_k)
 
 
 # =============================================================================
@@ -103,7 +131,81 @@ def retrieve(
     #         return fallback
     #
     # return final_results[:top_k]
-    raise NotImplementedError("Implement retrieve")
+    if top_k <= 0 or not query.strip():
+        return []
+
+    candidate_k = max(top_k * 2, top_k)
+
+    # Step 1: run dense + sparse retrieval. Each branch is guarded so Task 9
+    # still works in local/demo environments where Chroma, model files, or
+    # optional services are not ready yet.
+    try:
+        dense_results = _semantic_search(query, top_k=candidate_k)
+    except Exception as exc:
+        print(f"  Warning: semantic search unavailable ({exc.__class__.__name__}: {exc})")
+        dense_results = []
+
+    try:
+        sparse_results = _lexical_search(query, top_k=candidate_k)
+    except Exception as exc:
+        print(f"  Warning: lexical search unavailable ({exc.__class__.__name__}: {exc})")
+        sparse_results = []
+
+    # Step 2: fuse ranks with RRF. The fused score is only a ranking signal; it
+    # must not be used for fallback thresholding because RRF is rank-based.
+    ranked_lists = [results for results in (dense_results, sparse_results) if results]
+    merged = _rerank_rrf(ranked_lists, top_k=candidate_k) if ranked_lists else []
+    merged = [
+        {
+            **item,
+            "metadata": dict(item.get("metadata", {})),
+            "source": "hybrid",
+        }
+        for item in merged
+    ]
+
+    # Step 3: rerank the fused candidates. With method="rrf", Task 7 keeps the
+    # RRF score and adds a tiny lexical overlap tie-breaker.
+    if use_reranking and merged:
+        try:
+            final_results = _rerank(query, merged, top_k=top_k, method=RERANK_METHOD)
+        except Exception as exc:
+            print(f"  Warning: rerank unavailable ({exc.__class__.__name__}: {exc})")
+            final_results = merged[:top_k]
+    else:
+        final_results = merged[:top_k]
+
+    # Step 4: decide fallback using the original semantic cosine score, not RRF.
+    # Empty/failed semantic retrieval gives 0.0, allowing PageIndex fallback.
+    best_semantic_score = float(dense_results[0].get("score", 0.0)) if dense_results else 0.0
+    if best_semantic_score < score_threshold:
+        print(
+            "  Warning: semantic best score "
+            f"({best_semantic_score:.3f}) < threshold ({score_threshold})"
+        )
+        try:
+            fallback = _pageindex_search(query, top_k=top_k)
+        except Exception as exc:
+            print(f"  Warning: PageIndex fallback unavailable ({exc.__class__.__name__}: {exc})")
+            fallback = []
+        if fallback:
+            return [
+                {
+                    **item,
+                    "metadata": dict(item.get("metadata", {})),
+                    "source": "pageindex",
+                }
+                for item in fallback[:top_k]
+            ]
+
+    return [
+        {
+            **item,
+            "metadata": dict(item.get("metadata", {})),
+            "source": item.get("source", "hybrid"),
+        }
+        for item in final_results[:top_k]
+    ]
 
 
 if __name__ == "__main__":
