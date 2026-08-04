@@ -14,7 +14,7 @@ bất kể nội dung đó có thật sự liên quan đến câu hỏi hay khô
 quyết định fallback ở Task 9 — xem ghi chú ở đó.
 """
 
-from typing import Optional
+import re
 
 
 def rerank_cross_encoder(
@@ -126,28 +126,36 @@ def rerank_rrf(
     Returns:
         List of top_k candidates sorted by RRF score descending.
     """
-    # TODO: Implement RRF
-    #
-    # rrf_scores = {}  # content -> score
-    # content_map = {}  # content -> full dict
-    #
-    # for ranked_list in ranked_lists:
-    #     for rank, item in enumerate(ranked_list, 1):
-    #         key = item["content"]
-    #         rrf_scores[key] = rrf_scores.get(key, 0) + 1 / (k + rank)
-    #         content_map[key] = item
-    #
-    # # Sort by RRF score
-    # sorted_items = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-    #
-    # results = []
-    # for content, score in sorted_items[:top_k]:
-    #     item = content_map[content].copy()
-    #     item["score"] = score
-    #     results.append(item)
-    #
-    # return results
-    raise NotImplementedError("Implement rerank_rrf")
+    if top_k <= 0 or k < 0:
+        return []
+
+    rrf_scores: dict[str, float] = {}
+    content_map: dict[str, dict] = {}
+    for ranked_list in ranked_lists:
+        for rank, item in enumerate(ranked_list, start=1):
+            content = item.get("content", "")
+            if not content:
+                continue
+            # Source/chunk_index phân biệt các chunks có text giống nhau.
+            metadata = item.get("metadata", {})
+            identity = f"{metadata.get('source', '')}:{metadata.get('chunk_index', '')}:{content}"
+            rrf_scores[identity] = rrf_scores.get(identity, 0.0) + 1 / (k + rank)
+            content_map.setdefault(identity, item)
+
+    ordered = sorted(rrf_scores, key=lambda key: rrf_scores[key], reverse=True)
+    return [
+        {**content_map[key], "score": round(rrf_scores[key], 8)}
+        for key in ordered[:top_k]
+    ]
+
+
+def _query_overlap_score(query: str, content: str) -> float:
+    """Fallback reranker nhẹ: ưu tiên candidate chứa nhiều query token hơn."""
+    tokens = set(re.findall(r"[^\W_]+", query.lower(), flags=re.UNICODE))
+    if not tokens:
+        return 0.0
+    content_tokens = set(re.findall(r"[^\W_]+", content.lower(), flags=re.UNICODE))
+    return len(tokens & content_tokens) / len(tokens)
 
 
 # =============================================================================
@@ -172,14 +180,24 @@ def rerank(
     Returns:
         List of top_k reranked candidates.
     """
+    if not candidates or top_k <= 0:
+        return []
     if method == "cross_encoder":
         return rerank_cross_encoder(query, candidates, top_k)
     elif method == "mmr":
         # Cần query_embedding - embed query trước
         raise NotImplementedError("Call rerank_mmr with query_embedding")
     elif method == "rrf":
-        # RRF cần nhiều ranked lists - gọi riêng
-        raise NotImplementedError("Call rerank_rrf with ranked_lists")
+        # Task 9 đã fuse bằng rerank_rrf trước khi gọi hàm này. Ở đây dùng
+        # overlap làm tie-breaker nhẹ, vẫn giữ RRF score là tín hiệu chính.
+        reranked = []
+        for item in candidates:
+            result = dict(item)
+            result["score"] = float(item.get("score", 0.0)) + _query_overlap_score(
+                query, item.get("content", "")
+            ) * 1e-9
+            reranked.append(result)
+        return sorted(reranked, key=lambda item: item["score"], reverse=True)[:top_k]
     else:
         raise ValueError(f"Unknown rerank method: {method}")
 
