@@ -37,14 +37,19 @@ TOP_P = 0.9
 # Chọn 0.3 vì: RAG cần factual, ít sáng tạo
 TEMPERATURE = 0.3
 
-# Gemini 3.5 Flash-Lite is the selected provider for the evaluation run.
-LLM_MODEL = "gemini-3.5-flash-lite"
+# 9Router là endpoint local tương thích OpenAI. Các biến này đọc từ .env để
+# mỗi máy có thể dùng API key/model riêng mà không sửa code.
+NINE_ROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "http://localhost:20128/v1")
+LLM_MODEL = os.getenv("OPENROUTER_MODEL", "free")
 
-# Keep the evaluation deterministic: use the configured Gemini provider directly
-# instead of silently falling through to a different provider/model.
+# 9Router local (chính) -> OpenAI -> Gemini (fallback cho evaluation/demo).
 LLM_PROVIDERS = [
+    {"name": "9router", "base_url": NINE_ROUTER_BASE_URL,
+     "api_key_env": "OPENROUTER_API_KEY", "model": LLM_MODEL},
+    {"name": "openai", "base_url": None,
+     "api_key_env": "OPENAI_API_KEY", "model": "gpt-4o-mini"},
     {"name": "gemini", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
-     "api_key_env": "RAG_GEMINI_API_KEY", "model": LLM_MODEL},
+     "api_key_env": "RAG_GEMINI_API_KEY", "model": "gemini-3.5-flash-lite"},
 ]
 
 
@@ -119,15 +124,15 @@ def format_context(chunks: list[dict]) -> str:
 
 
 # =============================================================================
-# LLM CALL — với fallback chain (OpenRouter -> OpenAI -> Gemini)
+# LLM CALL — với fallback chain (9Router -> OpenAI -> Gemini)
 # =============================================================================
 
 def _call_llm(messages: list[dict]) -> str:
     """
     Gọi LLM qua chain provider, thử lần lượt cho tới khi có provider thành công.
 
-    Lý do cần fallback: OpenRouter free tier giới hạn ~50 req/ngày, dễ gặp 429
-    khi cả lớp cùng demo. OPENAI_API_KEY/GEMINI_API_KEY là tùy chọn — provider
+    Lý do cần fallback: 9Router local có thể chưa chạy hoặc hết quota upstream.
+    OPENAI_API_KEY/GEMINI_API_KEY là tùy chọn — provider
     nào không có key trong .env sẽ bị bỏ qua, không raise lỗi.
     """
     from openai import OpenAI

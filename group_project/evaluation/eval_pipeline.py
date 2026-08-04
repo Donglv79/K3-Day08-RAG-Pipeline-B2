@@ -33,9 +33,14 @@ GOLDEN_DATASET_PATH = Path(__file__).parent / "golden_dataset.json"
 RESULTS_PATH = Path(__file__).parent / "results.md"
 REQUIRED_GOLDEN_FIELDS = ("question", "expected_answer", "expected_context")
 PROJECT_ROOT = Path(__file__).parents[2]
-GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-GEMINI_CHAT_MODEL = "gemini-3.5-flash-lite"
-GEMINI_EMBEDDING_MODEL = "gemini-embedding-2"
+NINE_ROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "http://localhost:20128/v1")
+NINE_ROUTER_CHAT_MODEL = os.getenv("OPENROUTER_MODEL", "9router")
+# 9Router must expose an embedding-capable model for RAGAS. Override this name
+# in .env if the local gateway routes embeddings to a different provider.
+# Use the already-downloaded local BGE-M3 embedding model for RAGAS. 9Router
+# can serve chat completions, but may not have credentials for an OpenAI
+# embedding provider (which would cause HTTP 400 during evaluation).
+LOCAL_EMBEDDING_MODEL = os.getenv("RAGAS_EMBEDDING_MODEL", "BAAI/bge-m3")
 METRICS = ("faithfulness", "answer_relevancy", "context_recall", "context_precision")
 
 load_dotenv(PROJECT_ROOT / ".env")
@@ -96,14 +101,15 @@ def run_task10_with_config(question: str, config: dict[str, Any]) -> dict[str, A
     return generate_with_citation(question, **config)
 
 
-def build_gemini_ragas_models() -> tuple[Any, Any]:
-    """Build RAGAS LLM + embedding adapters through Gemini's OpenAI endpoint."""
-    api_key = os.getenv("RAG_GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
+def build_9router_ragas_models() -> tuple[Any, Any]:
+    """Use 9Router for LLM judging and local BGE-M3 for embeddings."""
+    api_key = os.getenv("OPENROUTER_API_KEY")
     if not api_key:
-        raise RuntimeError("Set RAG_GEMINI_API_KEY or GEMINI_API_KEY in .env first.")
+        raise RuntimeError("Set OPENROUTER_API_KEY in .env for 9Router first.")
 
     try:
-        from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+        from langchain_community.embeddings import HuggingFaceEmbeddings
+        from langchain_openai import ChatOpenAI
         from ragas.llms import LangchainLLMWrapper
     except ImportError as exc:
         raise RuntimeError(
@@ -112,15 +118,15 @@ def build_gemini_ragas_models() -> tuple[Any, Any]:
 
     llm = LangchainLLMWrapper(
         ChatOpenAI(
-            model=GEMINI_CHAT_MODEL,
+            model=NINE_ROUTER_CHAT_MODEL,
             api_key=api_key,
-            base_url=GEMINI_BASE_URL,
+            base_url=NINE_ROUTER_BASE_URL,
         )
     )
-    embeddings = OpenAIEmbeddings(
-        model=GEMINI_EMBEDDING_MODEL,
-        api_key=api_key,
-        base_url=GEMINI_BASE_URL,
+    embeddings = HuggingFaceEmbeddings(
+        model_name=LOCAL_EMBEDDING_MODEL,
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True},
     )
     return llm, embeddings
 
@@ -235,7 +241,7 @@ def evaluate_with_ragas(
         for item in golden_dataset
     ]
     if llm is None or embeddings is None:
-        llm, embeddings = build_gemini_ragas_models()
+        llm, embeddings = build_9router_ragas_models()
 
     # Gemini's OpenAI-compatible endpoint accepts a single completion per call.
     # RAGAS AnswerRelevancy defaults to strictness=3, which requests multiple
@@ -338,7 +344,7 @@ def compare_configs(
         "hybrid_no_rerank": {"use_reranking": False},
     }
     if llm is None or embeddings is None:
-        llm, embeddings = build_gemini_ragas_models()
+        llm, embeddings = build_9router_ragas_models()
 
     comparison: dict[str, dict] = {}
     for name, config in configs.items():
@@ -405,7 +411,10 @@ def export_results(comparison: dict[str, dict[str, Any]]) -> None:
     content += "- Framework: RAGAS\n"
     content += f"- Dataset: {len(load_golden_dataset(require_minimum=True))} evidence-backed questions\n"
     content += f"- Config A: `{left}`\n- Config B: `{right}`\n"
-    content += "- Evaluator: Gemini 3.5 Flash-Lite; embeddings: Gemini Embedding 2\n\n"
+    content += (
+        f"- Evaluator: 9Router model `{NINE_ROUTER_CHAT_MODEL}`; embeddings: "
+        f"local `{LOCAL_EMBEDDING_MODEL}`\n\n"
+    )
     content += "## Overall scores\n\n"
     content += f"| Metric | {left} | {right} | Delta (A-B) |\n"
     content += "|---|---:|---:|---:|\n"
