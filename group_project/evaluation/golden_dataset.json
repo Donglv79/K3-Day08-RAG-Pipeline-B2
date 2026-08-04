@@ -1,17 +1,77 @@
 [
   {
-    "question": "Học phí hàng năm của chương trình Business tại RMIT Vietnam là bao nhiêu?",
-    "expected_answer": "Khoảng 375.840.000 VND mỗi năm (tùy chương trình cụ thể).",
-    "expected_context": "Trang Tuition Fees, mục Undergraduate Programs"
+    "question": "Học bổng học phí tại RMIT Vietnam bao gồm những gì?",
+    "expected_answer": "Học bổng học phí là khoản giảm toàn bộ hoặc một phần học phí của chương trình học tại RMIT Vietnam. Trừ khi thư mời học bổng nêu khác, người nhận tự chịu các khoản thuế, phí và phụ thu ngoài học phí.",
+    "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clauses 1"
   },
   {
-    "question": "Học phí được thanh toán theo hình thức nào?",
-    "expected_answer": "Thanh toán theo từng học kỳ, tính theo từng môn học đã đăng ký.",
-    "expected_context": "Trang Tuition Fees, mục Payment Structure"
+    "question": "Nếu người nhận học bổng trượt một môn học thì ai chịu học phí của môn đó?",
+    "expected_answer": "Người nhận học bổng chịu học phí của môn đã trượt, trừ khi loại học bổng cụ thể hoặc RMIT Vietnam có ngoại lệ.",
+    "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clause 2"
   },
   {
-    "question": "Trường có cung cấp ký túc xá trong khuôn viên không?",
-    "expected_answer": "Không — trường không cung cấp chỗ ở trong khuôn viên, nhưng có đội ngũ hỗ trợ sinh viên tìm chỗ ở gần trường.",
-    "expected_context": "Trang Accommodation Services"
+    "question": "Sinh viên mới có thể bảo lưu học bổng không?",
+    "expected_answer": "Học bổng của sinh viên mới không thể bảo lưu trừ khi thư mời học bổng quy định khác. Học bổng của sinh viên hiện tại có thể được bảo lưu một học kỳ, tùy quyết định chấp thuận của trường.",
+    "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clause 4"
+  },
+  {
+    "question": "Tôi có thể đổi học bổng RMIT thành tiền mặt hoặc chuyển cho người khác không?",
+    "expected_answer": "Không. Học bổng không được chuyển đổi thành tiền mặt hoặc chuyển nhượng trong bất kỳ trường hợp nào.",
+    "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clause 5"
+  },
+  {
+    "question": "Một sinh viên có thể nhận đồng thời bao nhiêu học bổng học phí?",
+    "expected_answer": "Sinh viên chỉ có thể được trao và hưởng tối đa một học bổng học phí tại một thời điểm.",
+    "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clause 10"
+  },
+  {
+    "question": "Người nhận học bổng bậc đại học cần duy trì tối thiểu bao nhiêu credit points mỗi kỳ?",
+    "expected_answer": "Người nhận học bổng bậc đại học phải duy trì khối lượng học toàn thời gian tương đương ít nhất 36 credit points mỗi học kỳ.",
+    "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clause 11"
+  },
+  {
+    "question": "Hợp đồng thuê nhà tiêu chuẩn ở Việt Nam thường kéo dài bao lâu?",
+    "expected_answer": "Hợp đồng thuê nhà tiêu chuẩn thường kéo dài từ 6 đến 12 tháng; trong một số trường hợp có thể thương lượng hợp đồng ngắn hơn, ví dụ 3 đến 4 tháng.",
+    "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, Lease Duration"
+  },
+  {
+    "question": "Khi chuẩn bị thuê nhà, sinh viên quốc tế nên chuẩn bị những giấy tờ nào?",
+    "expected_answer": "Sinh viên nên chuẩn bị bản sao hộ chiếu, thị thực sinh viên và thẻ sinh viên; nếu chưa nhập học có thể dùng Letter of Offer thay cho thẻ sinh viên.",
+    "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, When You're Ready to Apply"
+  },
+  {
+    "question": "Hợp đồng thuê nhà cần nêu rõ những nội dung nào?",
+    "expected_answer": "Hợp đồng cần nêu rõ giá và hạn trả tiền thuê, thời hạn thuê, điều khoản đặt cọc, trách nhiệm bảo trì, các tiện ích được hoặc không được bao gồm, và điều khoản chấm dứt sớm.",
+    "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, What to Look for in the Contract"
+  },
+  {
+    "question": "Khi ký hợp đồng thuê nhà, tiền đặt cọc thông thường là bao nhiêu?",
+    "expected_answer": "Thông thường người thuê được yêu cầu đặt cọc bằng 1 đến 2 tháng tiền thuê; đôi khi còn phải trả trước một tháng tiền thuê. Cần lấy biên nhận bằng văn bản cho mọi khoản thanh toán.",
+    "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, Deposit & Advance Payment"
+  },
+  {
+    "question": "Sau khi chuyển vào nhà thuê, sinh viên quốc tế cần làm thủ tục cư trú nào?",
+    "expected_answer": "Sinh viên quốc tế phải đăng ký cư trú với công an phường địa phương. Chủ nhà hoặc ban quản lý thường hỗ trợ, nhưng sinh viên cần xác nhận việc này đã hoàn tất; hồ sơ thường gồm hộ chiếu, visa và hợp đồng thuê nhà.",
+    "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, Residence Registration"
+  },
+  {
+    "question": "R-Loop Festival có bao nhiêu người từ các cơ sở RMIT tham gia và hoạt động này do đơn vị nào dẫn dắt?",
+    "expected_answer": "Hơn 200 sinh viên và nhân viên từ hai cơ sở Saigon South và Hanoi đã tham gia. Đây là sáng kiến do Thư viện dẫn dắt.",
+    "expected_context": "article_02.md, opening paragraph"
+  },
+  {
+    "question": "Chương trình Adobe Express Champions có bao nhiêu buổi đào tạo và bao nhiêu người tham gia?",
+    "expected_answer": "Tuần ra mắt Adobe Express Champions có tám buổi đào tạo với hơn 100 người tham gia; bốn student coaches hướng dẫn các tính năng cốt lõi của Adobe Express.",
+    "expected_context": "article_04.md, opening paragraph"
+  },
+  {
+    "question": "Book Swap kỷ niệm 10 năm của RMIT đã có kết quả nổi bật nào?",
+    "expected_answer": "Gần 1.400 cuốn sách đã tìm được chủ mới; sự kiện có 154 người tham dự trực tiếp, 41 người tham gia trivia trực tuyến và khoảng 300 người tham gia duy nhất tại Book Fest.",
+    "expected_context": "article_03.md, Celebrating a decade of the Book Swap journey"
+  },
+  {
+    "question": "Chuyến thăm từ Can Tho University đã giới thiệu những gì về thư viện RMIT Vietnam?",
+    "expected_answer": "Chuyến đi thực địa giúp sinh viên quan sát cách một thư viện học thuật chuyên nghiệp hoạt động. Đồng nghiệp tại Beanland Library giới thiệu chi tiết các dịch vụ và hỗ trợ dành cho cộng đồng RMIT, rồi tổ chức tham quan thư viện.",
+    "expected_context": "article_05.md, opening paragraph"
   }
 ]
