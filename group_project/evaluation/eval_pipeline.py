@@ -22,6 +22,7 @@ chừng, thử giảm xuống subset 5 câu để chạy kịp trong buổi, ho�
 import argparse
 import json
 import os
+import sys
 from statistics import mean
 from pathlib import Path
 from typing import Any, Callable
@@ -38,6 +39,8 @@ GEMINI_EMBEDDING_MODEL = "gemini-embedding-2"
 METRICS = ("faithfulness", "answer_relevancy", "context_recall", "context_precision")
 
 load_dotenv(PROJECT_ROOT / ".env")
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 def load_golden_dataset(require_minimum: bool = False) -> list[dict[str, str]]:
@@ -217,6 +220,7 @@ def evaluate_with_ragas(
             context_recall,
             faithfulness,
         )
+        from ragas.run_config import RunConfig
     except ImportError as exc:
         raise RuntimeError(
             "Install the evaluation dependencies first: "
@@ -233,11 +237,21 @@ def evaluate_with_ragas(
     if llm is None or embeddings is None:
         llm, embeddings = build_gemini_ragas_models()
 
+    # Gemini's OpenAI-compatible endpoint accepts a single completion per call.
+    # RAGAS AnswerRelevancy defaults to strictness=3, which requests multiple
+    # candidates and triggers HTTP 400. One candidate preserves the metric while
+    # remaining compatible with Gemini.
+    answer_relevancy.strictness = 1
+
     result = evaluate(
         Dataset.from_list(rows),
         metrics=[faithfulness, answer_relevancy, context_recall, context_precision],
         llm=llm,
         embeddings=embeddings,
+        # Gemini free tier allows 15 generate requests/minute. Sequential jobs
+        # plus retries are slower but avoid invalid parallel bursts and preserve
+        # a complete, comparable A/B run.
+        run_config=RunConfig(max_workers=1, max_retries=10, max_wait=90),
     )
     case_rows = result.to_pandas().to_dict(orient="records")
     return {

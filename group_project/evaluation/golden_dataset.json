@@ -1,12 +1,12 @@
 [
   {
-    "question": "Học bổng học phí tại RMIT Vietnam bao gồm những gì?",
-    "expected_answer": "Học bổng học phí là khoản giảm toàn bộ hoặc một phần học phí của chương trình học tại RMIT Vietnam. Trừ khi thư mời học bổng nêu khác, người nhận tự chịu các khoản thuế, phí và phụ thu ngoài học phí.",
+    "question": "What does a tuition fee scholarship at RMIT Vietnam cover?",
+    "expected_answer": "A tuition fee scholarship is a full or partial reduction of tuition fees for an RMIT Vietnam program. Unless the scholarship offer states otherwise, the recipient is responsible for taxes, fees, and charges other than tuition fees.",
     "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clauses 1"
   },
   {
-    "question": "Nếu người nhận học bổng trượt một môn học thì ai chịu học phí của môn đó?",
-    "expected_answer": "Người nhận học bổng chịu học phí của môn đã trượt, trừ khi loại học bổng cụ thể hoặc RMIT Vietnam có ngoại lệ.",
+    "question": "Who pays the course fee if a scholarship recipient fails a course?",
+    "expected_answer": "The scholarship recipient pays the course fee for the failed course, unless an exception applies to that scholarship type or is granted by RMIT Vietnam.",
     "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clause 2"
   },
   {
@@ -30,13 +30,13 @@
     "expected_context": "rmit-university-vietnam-scholarship-terms-and-conditions.md, clause 11"
   },
   {
-    "question": "Hợp đồng thuê nhà tiêu chuẩn ở Việt Nam thường kéo dài bao lâu?",
-    "expected_answer": "Hợp đồng thuê nhà tiêu chuẩn thường kéo dài từ 6 đến 12 tháng; trong một số trường hợp có thể thương lượng hợp đồng ngắn hơn, ví dụ 3 đến 4 tháng.",
+    "question": "How long is a standard rental lease in Vietnam?",
+    "expected_answer": "A standard lease in Vietnam is usually 6 to 12 months. A shorter lease, such as 3 to 4 months, may sometimes be negotiated for a short study period.",
     "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, Lease Duration"
   },
   {
-    "question": "Khi chuẩn bị thuê nhà, sinh viên quốc tế nên chuẩn bị những giấy tờ nào?",
-    "expected_answer": "Sinh viên nên chuẩn bị bản sao hộ chiếu, thị thực sinh viên và thẻ sinh viên; nếu chưa nhập học có thể dùng Letter of Offer thay cho thẻ sinh viên.",
+    "question": "What documents should an international student prepare when applying for a rental property?",
+    "expected_answer": "They should prepare a copy of their passport, student visa, and student ID. A Letter of Offer can be used instead of a student ID before enrolment.",
     "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, When You're Ready to Apply"
   },
   {
@@ -55,8 +55,8 @@
     "expected_context": "accommodation-advice-for-international-students-in-vietnam.md, Residence Registration"
   },
   {
-    "question": "R-Loop Festival có bao nhiêu người từ các cơ sở RMIT tham gia và hoạt động này do đơn vị nào dẫn dắt?",
-    "expected_answer": "Hơn 200 sinh viên và nhân viên từ hai cơ sở Saigon South và Hanoi đã tham gia. Đây là sáng kiến do Thư viện dẫn dắt.",
+    "question": "How many people joined the R-Loop Festival, and which unit led the initiative?",
+    "expected_answer": "More than 200 students and staff from the Saigon South and Hanoi campuses joined the festival. It was a Library-led initiative.",
     "expected_context": "article_02.md, opening paragraph"
   },
   {
